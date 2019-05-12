@@ -1,3 +1,7 @@
-Dict:Dict.java
+Dict:Dict.class D.class
+	java D
+Dict.class:Dict.java
 	javac -g Dict.java
-	java Dict
+D.class:D.java
+	javac -g D.java
+

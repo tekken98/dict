@@ -1,30 +1,37 @@
 import java.io.FileInputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 class Dict{
     class Cache{
         boolean d_flag;
         int d_offset;
     };
-    FileInputStream d_isIndex;
-    FileInputStream d_isDict;
-    FileInputStream d_isCache;
+    FileInputStream d_isIndex = null;
+    FileInputStream d_isDict = null;
+    FileInputStream d_isCache = null;
     
 
-    int d_buffBegin;
-    int d_buffEnd;
+
+    Cache[][] d_indexCache;
+    String d_word;
+    boolean d_over;
     byte [] d_buff;
     byte [] d_wordBuff;
+    int d_buffBegin;
+    int d_buffEnd;
     int d_ip;
-    boolean d_over;
     int d_offset;
     int d_wordOffset;
     int d_wordSize;
-    String d_word;
-    Cache[][] d_indexCache;
-
     final int BUFFSIZE = 40960;
     final int CACHESIZE = 128;
+
     boolean init(){
         try{
+	    if (d_isIndex != null)
+		    d_isIndex.close();
+	    if (d_isDict != null)
+		    d_isIndex.close();
             d_isIndex = new FileInputStream("longman.idx");
             d_isDict  = new FileInputStream("longman.dict");
             //d_isCache = new FileInputStream("longman.cache");
@@ -132,7 +139,7 @@ class Dict{
     int min (int a, int b){
         return a > b ? b:a;
     }
-    void findWord(String w){
+    String findWord(String w){
         init();
         skipCache(w);
         int len = w.length();
@@ -156,26 +163,36 @@ class Dict{
                 if (max < i){
                 tempOffset = d_wordOffset;
                 tempSize = d_wordSize;
-                tempWord = d_word;
                 max = i;
                 if ( max == len)
-                    //break;
-                    ;
+                    break;
                 }
             }
             else
                 break;
         }
-        System.out.println(w);
-        System.out.println(tempWord);
-        d_wordBuff = new byte[tempSize];
-        try{
-            d_isDict.skip(tempOffset);
-            d_isDict.read(d_wordBuff,0,tempSize);
-            System.out.println(new String(d_wordBuff));
-        }catch(Exception e){
-            System.out.println(e.toString());
-        }
+	return getWord(tempOffset,tempSize);
+    }
+    void dumpWordAndDict(){
+	    System.out.println(d_word);
+	    String w = getWord(d_wordOffset,d_wordSize);
+	    System.out.println(w);
+    }
+    String findNextWord(){
+	    nextIndex();
+	    return getWord(d_wordOffset,d_wordSize);
+    }
+    String getWord(int offset, int size){
+	    try{
+		    d_wordBuff = new byte[size];
+		    d_isDict.close();
+		    d_isDict = new FileInputStream("longman.dict");
+		    d_isDict.skip(offset);
+		    d_isDict.read(d_wordBuff,0,size);
+		    return new String(d_wordBuff);
+	    }catch(Exception io){
+		    return null;
+	    }
     }
     void initCache(){
     d_indexCache = new Cache[CACHESIZE][CACHESIZE];
@@ -185,6 +202,9 @@ class Dict{
                 d_indexCache[i][j].d_flag = false;
                 d_indexCache[i][j].d_offset = 0;
             }
+    }
+    String getCurrentWord(){
+	    return d_word;
     }
     void makeCache(){
             String w;
@@ -207,7 +227,16 @@ class Dict{
     public static void main(String [] args){
         Dict dict = new Dict();
         dict.run();
-        dict.findWord(args[0]);
+	BufferedReader br = new BufferedReader(
+			new InputStreamReader(System.in));
+	while(true){
+		try{
+		String a = br.readLine();
+		dict.findWord(a);
+		dict.dumpWordAndDict();
+		}catch(Exception e){
+		}
+	}
     }
 }
 
