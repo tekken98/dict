@@ -11,7 +11,6 @@ public class D extends KeyAdapter implements ActionListener{
     void init(String dict){
         dic = null;
         dic = new Dict(dict);
-        dic.run();
     }
     D() {
         frame = new JFrame();
